@@ -15,7 +15,7 @@ interface LoginDetailsRepo {
     fun updateLoginMethod(method: LoginMethod): Completable
 }
 
-class PersistedLoginDetailsRepo(val persistance: RxPaperBook): LoginDetailsRepo {
+class PersistedLoginDetailsRepo(internal val persistence: RxPaperBook): LoginDetailsRepo {
 
     internal object PersistenceKeys {
         val details = "details"
@@ -26,19 +26,19 @@ class PersistedLoginDetailsRepo(val persistance: RxPaperBook): LoginDetailsRepo 
     internal val methodRelay = BehaviorRelay.create<LoginMethod>()
 
     override fun observeLoginDetails(): Observable<LoginDetails> {
-        return detailsRelay.withInitIfEmpty { persistance.read(PersistenceKeys.details) }
+        return detailsRelay.withInitIfEmpty { persistence.read(PersistenceKeys.details, LoginDetails.empty) }
     }
 
     override fun observePreferredLoginMethod(): Observable<LoginMethod> {
-        return methodRelay.withInitIfEmpty {  persistance.read(PersistenceKeys.method) }
+        return methodRelay.withInitIfEmpty {  persistence.read(PersistenceKeys.method, LoginMethod.UNKNOWN) }
     }
 
     override fun updateLoginDetails(details: LoginDetails): Completable {
-        return persistance.writeThenForward(PersistenceKeys.details, details, detailsRelay)
+        return persistence.writeThenForward(PersistenceKeys.details, details, detailsRelay)
     }
 
     override fun updateLoginMethod(method: LoginMethod): Completable {
-        return persistance.writeThenForward(PersistenceKeys.method, method, methodRelay)
+        return persistence.writeThenForward(PersistenceKeys.method, method, methodRelay)
     }
 
 }
